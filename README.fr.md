@@ -24,7 +24,7 @@ L'impression produit quatre voies par page A4.
 
 ## Déploiement
 
-Chaque push sur `main` construit puis publie `dist/index.html` sur GitHub Pages via `.github/workflows/deploy.yml`. L'application compare sa version horodatée avec `https://ecstrema.github.io/home-wall/` et propose une mise à jour en conservant les voies et le titre locaux.
+Chaque push sur `main` construit puis publie `dist/index.html` sur GitHub Pages via `.github/workflows/deploy.yml`. Le workflow publie aussi une source de mise à jour dans la branche `app-source`, car `raw.githubusercontent.com` autorise les lectures cross-origin depuis les installations locales en `file:`. L'application compare sa version horodatée avec cette source et propose une mise à jour en conservant les voies et le titre locaux.
 
 ## Transparence concernant l'IA
 

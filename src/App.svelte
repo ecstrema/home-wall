@@ -7,7 +7,7 @@
   import type { Boulder, HoldType } from "./lib/route-setter/types";
 
   const storageKey = "climbing-wall-boulders";
-  const deployedAppUrl = "https://ecstrema.github.io/home-wall/";
+  const updateSourceUrl = "https://raw.githubusercontent.com/ecstrema/home-wall/app-source/index.html";
   type SavedSnapshot = {
     savedAt: number;
     routes: Boulder[];
@@ -241,7 +241,7 @@
   async function checkForUpdates() {
     try {
       const response = await fetch(
-        `${deployedAppUrl}?update-check=${Date.now()}`,
+        `${updateSourceUrl}?update-check=${Date.now()}`,
         { cache: "no-store" },
       );
       if (!response.ok) return;
@@ -266,7 +266,7 @@
   async function updateApp() {
     saveStatus = "Downloading app update...";
     try {
-      const response = await fetch(`${deployedAppUrl}?update=${Date.now()}`, {
+      const response = await fetch(`${updateSourceUrl}?update=${Date.now()}`, {
         cache: "no-store",
       });
       if (!response.ok) throw new Error("Update unavailable");

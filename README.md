@@ -24,7 +24,7 @@ Printing produces four routes per A4 page.
 
 ## Deployment
 
-Every push to `main` builds and deploys `dist/index.html` to GitHub Pages through `.github/workflows/deploy.yml`. The application compares its timestamped version with `https://ecstrema.github.io/home-wall/` and offers an update while preserving local routes and the title.
+Every push to `main` builds and deploys `dist/index.html` to GitHub Pages through `.github/workflows/deploy.yml`. The workflow also publishes an update source to the `app-source` branch, because `raw.githubusercontent.com` permits cross-origin reads from local `file:` installations. The application compares its timestamped version with that source and offers an update while preserving local routes and the title.
 
 ## AI disclosure
 
