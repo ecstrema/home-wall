@@ -1,15 +1,17 @@
 # My Wall
 
-Application Svelte/Vite pour creer et imprimer le guide des voies du mur d'escalade familial.
+Svelte/Vite application for creating and printing a guidebook for a home climbing wall.
 
-## Developpement
+[Lire la version francaise](README.fr.md)
+
+## Development
 
 ```sh
 bun install
 bun run dev
 ```
 
-Les voies sont conservees dans `localStorage`. **Save shared HTML** (ou `Ctrl+S`) utilise le File System Access API quand il est disponible et ecrit les donnees dans un fichier HTML partageable. Sinon, le fichier est telecharge automatiquement.
+Routes are stored in `localStorage`. **Save shared HTML** (or `Ctrl+S`) uses the File System Access API when available and writes the data into a shareable HTML file. Other browsers download the file instead.
 
 ## Production
 
@@ -18,4 +20,12 @@ bun run build
 bun run preview
 ```
 
-L'impression produit quatre voies par page A4.
+Printing produces four routes per A4 page.
+
+## Deployment
+
+Every push to `main` builds and deploys `dist/index.html` to GitHub Pages through `.github/workflows/deploy.yml`. The application compares its timestamped version with `https://ecstrema.github.io/home-wall/` and offers an update while preserving local routes and the title.
+
+## AI disclosure
+
+Most of this code was created with the assistance of AI. I have barely edited the code myself. I remain responsible for the project, but this repository should be treated as AI-assisted code and reviewed accordingly.

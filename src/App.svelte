@@ -7,6 +7,7 @@
   import type { Boulder, HoldType } from "./lib/route-setter/types";
 
   const storageKey = "climbing-wall-boulders";
+  const deployedAppUrl = "https://ecstrema.github.io/home-wall/";
   type SavedSnapshot = {
     savedAt: number;
     routes: Boulder[];
@@ -37,6 +38,8 @@
   let saveStatus = $state("Not saved");
   let hasUnsavedChanges = $state(false);
   let importInput: HTMLInputElement;
+  let updateAvailable = $state(false);
+  let latestVersion = $state("");
 
   const selectedRoute = () =>
     selectedIndex >= 0 ? routes[selectedIndex] : undefined;
@@ -85,10 +88,18 @@
     selectRoute(routes.length - 1);
   }
 
-  function updateRoute(index: number, updatedName: string, updatedGrade: string) {
-    commitRoutes(routes.map((route, routeIndex) =>
-      routeIndex === index ? { ...route, name: updatedName, grade: updatedGrade } : route,
-    ));
+  function updateRoute(
+    index: number,
+    updatedName: string,
+    updatedGrade: string,
+  ) {
+    commitRoutes(
+      routes.map((route, routeIndex) =>
+        routeIndex === index
+          ? { ...route, name: updatedName, grade: updatedGrade }
+          : route,
+      ),
+    );
   }
 
   function deleteRoute(index: number) {
@@ -144,21 +155,24 @@
       else nextHolds.splice(holdIndex, 1);
     }
 
-    commitRoutes(routes.map((route, index) =>
-      index === selectedIndex ? { ...route, holds: nextHolds } : route,
-    ));
+    commitRoutes(
+      routes.map((route, index) =>
+        index === selectedIndex ? { ...route, holds: nextHolds } : route,
+      ),
+    );
   }
 
   async function saveRoutes() {
     saveStatus = "Saving...";
     const clone = document.documentElement.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('[id^="hold-"]').forEach((element) =>
-      element.classList.remove("start", "normal", "end"),
-    );
+    clone
+      .querySelectorAll('[id^="hold-"]')
+      .forEach((element) => element.classList.remove("start", "normal", "end"));
     const clonedStatus = clone.querySelector(".save-status");
     if (clonedStatus) clonedStatus.textContent = "Not saved";
     const titleScript = clone.querySelector("#wall-title");
-    if (titleScript) titleScript.textContent = wallTitle.replace(/</g, "\\u003c");
+    if (titleScript)
+      titleScript.textContent = wallTitle.replace(/</g, "\\u003c");
     const dataScript = clone.querySelector("#boulders-data");
     if (!dataScript) {
       saveStatus = "Save unavailable";
@@ -169,17 +183,24 @@
       routes: cloneRoutes(routes),
       title: wallTitle,
     };
-    dataScript.textContent = JSON.stringify(snapshot, null, 2).replace(/</g, "\\u003c");
+    dataScript.textContent = JSON.stringify(snapshot, null, 2).replace(
+      /</g,
+      "\\u003c",
+    );
     const html = `<!DOCTYPE html>\n${clone.outerHTML}`;
 
     try {
       const pickerWindow = window as Window & {
-        showSaveFilePicker?: (options: unknown) => Promise<FileSystemFileHandle>;
+        showSaveFilePicker?: (
+          options: unknown,
+        ) => Promise<FileSystemFileHandle>;
       };
       if (!fileHandle && pickerWindow.showSaveFilePicker) {
         fileHandle = await pickerWindow.showSaveFilePicker({
           suggestedName: "topo-sous-sol.html",
-          types: [{ description: "HTML File", accept: { "text/html": [".html"] } }],
+          types: [
+            { description: "HTML File", accept: { "text/html": [".html"] } },
+          ],
         });
       }
       if (fileHandle) {
@@ -188,7 +209,9 @@
         await writable.close();
       } else {
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+        link.href = URL.createObjectURL(
+          new Blob([html], { type: "text/html" }),
+        );
         link.download = "topo-sous-sol.html";
         link.click();
         URL.revokeObjectURL(link.href);
@@ -198,7 +221,8 @@
       hasUnsavedChanges = false;
       saveStatus = `Saved at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
     } catch (error) {
-      if ((error as DOMException).name === "AbortError") saveStatus = "Save cancelled";
+      if ((error as DOMException).name === "AbortError")
+        saveStatus = "Save cancelled";
       else {
         saveStatus = "Save failed";
       }
@@ -209,9 +233,88 @@
     window.print();
   }
 
+  function versionNumber(version: string) {
+    const parsed = Date.parse(version);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  async function checkForUpdates() {
+    try {
+      const response = await fetch(
+        `${deployedAppUrl}?update-check=${Date.now()}`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) return;
+      const remoteDocument = new DOMParser().parseFromString(
+        await response.text(),
+        "text/html",
+      );
+      const remoteVersion =
+        remoteDocument
+          .querySelector('meta[name="app-version"]')
+          ?.getAttribute("content") ?? "";
+      if (versionNumber(remoteVersion) > versionNumber(__APP_VERSION__)) {
+        latestVersion = remoteVersion;
+        updateAvailable = true;
+        saveStatus = "App update available";
+      }
+    } catch {
+      // Offline or opening the app from file:; keep the installed app usable.
+    }
+  }
+
+  async function updateApp() {
+    saveStatus = "Downloading app update...";
+    try {
+      const response = await fetch(`${deployedAppUrl}?update=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Update unavailable");
+      const remoteDocument = new DOMParser().parseFromString(
+        await response.text(),
+        "text/html",
+      );
+      const dataScript = remoteDocument.querySelector("#boulders-data");
+      const titleScript = remoteDocument.querySelector("#wall-title");
+      if (!dataScript || !titleScript) throw new Error("Invalid app update");
+      const snapshot: SavedSnapshot = {
+        savedAt: Date.now(),
+        routes: cloneRoutes(routes),
+        title: wallTitle,
+      };
+      dataScript.textContent = JSON.stringify(snapshot, null, 2).replace(
+        /</g,
+        "\\u003c",
+      );
+      titleScript.textContent = wallTitle.replace(/</g, "\\u003c");
+      const html = `<!DOCTYPE html>\n${remoteDocument.documentElement.outerHTML}`;
+      if (fileHandle) {
+        const writable = await fileHandle.createWritable();
+        await writable.write(html);
+        await writable.close();
+      } else {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(
+          new Blob([html], { type: "text/html" }),
+        );
+        link.download = "topo-sous-sol.html";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+      localStorage.setItem(storageKey, JSON.stringify(snapshot));
+      localStorage.removeItem("climbing-wall-title");
+      updateAvailable = false;
+      saveStatus = `App updated to ${new Date(latestVersion).toLocaleString()}`;
+    } catch {
+      saveStatus = "App update failed";
+    }
+  }
+
   function exportData() {
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([JSON.stringify(routes, null, 2)], { type: "application/json" }));
+    link.href = URL.createObjectURL(
+      new Blob([JSON.stringify(routes, null, 2)], { type: "application/json" }),
+    );
     link.download = "topo-sous-sol-data.json";
     link.click();
     URL.revokeObjectURL(link.href);
@@ -229,17 +332,29 @@
     try {
       const contents = await file.text();
       let parsed: unknown;
-      if (file.name.toLowerCase().endsWith(".html") || file.type === "text/html") {
+      if (
+        file.name.toLowerCase().endsWith(".html") ||
+        file.type === "text/html"
+      ) {
         const document = new DOMParser().parseFromString(contents, "text/html");
         const dataScript = document.querySelector("#boulders-data");
-        if (!dataScript?.textContent) throw new Error("Missing embedded route data");
+        if (!dataScript?.textContent)
+          throw new Error("Missing embedded route data");
         parsed = JSON.parse(dataScript.textContent);
       } else {
         parsed = JSON.parse(contents);
       }
-      if (!Array.isArray(parsed) || !parsed.every((route) =>
-        route && typeof route.name === "string" && typeof route.grade === "string" && Array.isArray(route.holds),
-      )) throw new Error("Invalid route data");
+      if (
+        !Array.isArray(parsed) ||
+        !parsed.every(
+          (route) =>
+            route &&
+            typeof route.name === "string" &&
+            typeof route.grade === "string" &&
+            Array.isArray(route.holds),
+        )
+      )
+        throw new Error("Invalid route data");
       commitRoutes(cloneRoutes(parsed));
       selectRoute(routes.length ? 0 : -1);
       saveStatus = "Imported data (not saved)";
@@ -251,13 +366,17 @@
   }
 
   onMount(() => {
-    const embeddedTitle = document.getElementById("wall-title")?.textContent?.trim();
+    const embeddedTitle = document
+      .getElementById("wall-title")
+      ?.textContent?.trim();
     wallTitle = embeddedTitle || "My Wall";
     const embedded = document.getElementById("boulders-data")?.textContent;
     let embeddedSnapshot: SavedSnapshot | undefined;
     if (embedded) {
       try {
-        const parsedEmbedded = JSON.parse(embedded) as SavedSnapshot | Boulder[];
+        const parsedEmbedded = JSON.parse(embedded) as
+          | SavedSnapshot
+          | Boulder[];
         embeddedSnapshot = Array.isArray(parsedEmbedded)
           ? { savedAt: 0, routes: parsedEmbedded }
           : parsedEmbedded;
@@ -274,12 +393,16 @@
     const localRoutes = localStorage.getItem(storageKey);
     if (localRoutes) {
       try {
-        const parsedLocal = JSON.parse(localRoutes) as SavedSnapshot | Boulder[];
+        const parsedLocal = JSON.parse(localRoutes) as
+          | SavedSnapshot
+          | Boulder[];
         const localSnapshot: SavedSnapshot = Array.isArray(parsedLocal)
           ? { savedAt: 0, routes: parsedLocal }
           : parsedLocal;
-        if (Array.isArray(localSnapshot.routes) &&
-          localSnapshot.savedAt > (embeddedSnapshot?.savedAt ?? 0)) {
+        if (
+          Array.isArray(localSnapshot.routes) &&
+          localSnapshot.savedAt > (embeddedSnapshot?.savedAt ?? 0)
+        ) {
           routes = cloneRoutes(localSnapshot.routes);
           if (localSnapshot.title) wallTitle = localSnapshot.title;
           hasUnsavedChanges = true;
@@ -310,6 +433,7 @@
     };
     window.addEventListener("keydown", saveOnShortcut);
     window.addEventListener("beforeunload", warnBeforeUnload);
+    checkForUpdates();
     return () => {
       window.removeEventListener("keydown", saveOnShortcut);
       window.removeEventListener("beforeunload", warnBeforeUnload);
@@ -325,7 +449,12 @@
 <div class="app">
   <aside>
     <header>
-      <input class="wall-title" aria-label="Wall title" value={wallTitle} oninput={updateTitle} />
+      <input
+        class="wall-title"
+        aria-label="Wall title"
+        value={wallTitle}
+        oninput={updateTitle}
+      />
     </header>
 
     <RouteList
@@ -345,8 +474,21 @@
       <button onclick={saveRoutes}>Save shared HTML</button>
       <button onclick={exportData}>Export data</button>
       <button onclick={importData}>Import data</button>
-      <input class="import-input" bind:this={importInput} type="file" accept="application/json,.json,text/html,.html" onchange={readImportedData} />
-      <span class:unsaved={hasUnsavedChanges} class="save-status" aria-live="polite">
+      <input
+        class="import-input"
+        bind:this={importInput}
+        type="file"
+        accept="application/json,.json,text/html,.html"
+        onchange={readImportedData}
+      />
+      {#if updateAvailable}
+        <button class="update-app" onclick={updateApp}>Update app</button>
+      {/if}
+      <span
+        class:unsaved={hasUnsavedChanges}
+        class="save-status"
+        aria-live="polite"
+      >
         {hasUnsavedChanges ? "Unsaved changes" : saveStatus}
       </span>
     </footer>
@@ -412,10 +554,15 @@
     outline: 0;
     background: transparent;
     color: #f4f0e8;
-    font: normal 28px Georgia, "Times New Roman", serif;
+    font:
+      normal 28px Georgia,
+      "Times New Roman",
+      serif;
     line-height: 1.1;
   }
-  .wall-title:focus { border-bottom: 1px solid #d99852; }
+  .wall-title:focus {
+    border-bottom: 1px solid #d99852;
+  }
   button {
     border: 0;
     cursor: pointer;
@@ -433,14 +580,31 @@
       11px Arial,
       sans-serif;
   }
-    .import-input { display: none; }
+  .import-input {
+    display: none;
+  }
   .save-status {
     display: block;
     margin-top: 12px;
     color: #8e9a99;
-    font: 11px Arial, sans-serif;
+    font:
+      11px Arial,
+      sans-serif;
   }
-  .save-status.unsaved { color: #d99852; }
+  .save-status.unsaved {
+    color: #d99852;
+  }
+  .update-app {
+    color: #1c2526;
+    background: #d99852;
+    padding: 7px 10px;
+    font:
+      bold 11px Arial,
+      sans-serif;
+  }
+  .update-app:hover {
+    background: #ebb36e;
+  }
   main {
     flex: 1;
     min-width: 0;
@@ -471,13 +635,29 @@
     gap: 18px;
     padding: 0 3px 10px;
     color: #aeb8b5;
-    font: 11px Arial, sans-serif;
+    font:
+      11px Arial,
+      sans-serif;
   }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .legend i { width: 9px; height: 9px; border-radius: 50%; }
-  .legend i.start { background: #e4a257; }
-  .legend i.normal { background: #72a9b7; }
-  .legend i.end { background: #d96e62; }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .legend i.start {
+    background: #e4a257;
+  }
+  .legend i.normal {
+    background: #72a9b7;
+  }
+  .legend i.end {
+    background: #d96e62;
+  }
   @media (max-width: 700px) {
     .app {
       flex-direction: column;
@@ -513,8 +693,15 @@
     }
   }
   @media print {
-    @page { size: A4; margin: 10mm; }
-    :global(body) { background: white; }
-    .app { display: none; }
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+    :global(body) {
+      background: white;
+    }
+    .app {
+      display: none;
+    }
   }
 </style>
