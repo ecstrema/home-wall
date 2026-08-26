@@ -27,7 +27,7 @@
 					<svg viewBox="0 0 264.58334 264.58335" aria-label={`Map for ${route.name || 'unnamed climb'}`}>
 						<image href={wallImage} x="0" y="0" width="264.58334" height="264.58334" preserveAspectRatio="none" />
 						{#each holds as hold}
-							<path class={holdType(route, hold.id)} d={hold.path} />
+							<path class={holdType(route, hold.id)} d={hold.path} transform={hold.transform} />
 						{/each}
 					</svg>
 				</article>
@@ -50,7 +50,7 @@
 		.route-card svg { display: block; width: 100%; height: auto; }
 		.route-card path { fill: none; stroke-width: 2; }
 		.route-card path.start { fill: #e4a25759; stroke: #b56f19; }
-		.route-card path.normal { fill: #72a9b759; stroke: #397b8a; }
+		.route-card path.normal { fill: #72a9b759; stroke: #03ccff; }
 		.route-card path.end { fill: #d96e6259; stroke: #a63d33; }
 	}
 </style>

@@ -23,6 +23,7 @@
     route;
     requestAnimationFrame(paint);
   });
+
 </script>
 
 <div class="wall">
@@ -44,13 +45,14 @@
         <path
           id={hold.id}
           d={hold.path}
+          transform={hold.transform}
           role="button"
           tabindex="0"
           aria-label={`Toggle ${hold.id}`}
           onmousedown={(event) => event.preventDefault()}
           onclick={() => onCycle(hold.id)}
           onkeydown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
+            if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
               onCycle(hold.id);
             }
@@ -72,18 +74,18 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  .wall svg {
+  .wall :global(svg) {
     width: min(100%, calc(100vh - 100px));
     height: min(100%, calc(100vh - 100px));
   }
-  .wall path {
+  .wall :global(path) {
     user-select: none;
     -webkit-user-select: none;
     -webkit-user-drag: none;
   }
   .wall :global([id^="hold-"]) {
-    fill: transparent;
-    stroke: transparent;
+    fill: transparent !important;
+    stroke: transparent !important;
     stroke-width: 2;
     cursor: pointer;
     pointer-events: all;
@@ -92,16 +94,16 @@
     filter: brightness(1.2);
   }
   .wall :global(.start) {
-    fill: #e4a25759;
-    stroke: #e4a257;
+    fill: #e4a25759 !important;
+    stroke: #e4a257 !important;
   }
   .wall :global(.normal) {
-    fill: #72a9b759;
-    stroke: #72a9b7;
+    fill: #72a9b759 !important;
+    stroke: #03ccff !important;
   }
   .wall :global(.end) {
-    fill: #d96e6259;
-    stroke: #d96e62;
+    fill: #d96e6259 !important;
+    stroke: #d0230f !important;
   }
   @media (max-width: 700px) {
     .wall {
@@ -111,7 +113,7 @@
       justify-content: flex-start;
       overflow-x: hidden;
     }
-    .wall svg {
+    .wall :global(svg) {
       width: 100%;
       height: 100%;
       max-width: 100%;

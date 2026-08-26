@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "optimize:image": "node scripts/optimize-wall-image.mjs",
+    "generate:wall": "node scripts/generate-wall-data.mjs",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
   },
   "devDependencies": {
