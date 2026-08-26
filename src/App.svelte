@@ -163,6 +163,10 @@
   }
 
   async function saveRoutes() {
+    if (import.meta.env.DEV) {
+      saveStatus = "Save disabled in development; use the production build.";
+      return;
+    }
     saveStatus = "Saving...";
     const clone = document.documentElement.cloneNode(true) as HTMLElement;
     clone
@@ -694,8 +698,8 @@
   }
   @media print {
     @page {
-      size: A4;
-      margin: 10mm;
+      size: A4 landscape;
+      margin: 0;
     }
     :global(body) {
       background: white;

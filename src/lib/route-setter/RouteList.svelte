@@ -15,7 +15,7 @@
 
 	let query = $state('');
 	let gradeFilter = $state('all');
-	let order = $state('manual');
+	let order = $state('grade');
 
 	const grades = ['all', 'V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6+'];
 
