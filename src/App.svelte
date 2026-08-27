@@ -7,7 +7,8 @@
   import type { Boulder, HoldType } from "./lib/route-setter/types";
 
   const storageKey = "climbing-wall-boulders";
-  const updateSourceUrl = "https://raw.githubusercontent.com/ecstrema/home-wall/app-source/index.html";
+  const updateSourceUrl =
+    "https://raw.githubusercontent.com/ecstrema/home-wall/refs/heads/app-source/index.html";
   type SavedSnapshot = {
     savedAt: number;
     routes: Boulder[];
@@ -164,6 +165,7 @@
 
   async function saveRoutes() {
     if (import.meta.env.DEV) {
+      console.log("Save disabled in development; use the production build.");
       saveStatus = "Save disabled in development; use the production build.";
       return;
     }
@@ -431,9 +433,9 @@
       }
     };
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!hasUnsavedChanges) return;
+      if (import.meta.env.DEV || !hasUnsavedChanges) return;
       event.preventDefault();
-      event.returnValue = "";
+      event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
     };
     window.addEventListener("keydown", saveOnShortcut);
     window.addEventListener("beforeunload", warnBeforeUnload);
