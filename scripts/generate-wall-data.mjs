@@ -19,6 +19,6 @@ const holds = paths.map(([, attributes], index) => {
   };
 });
 
-const output = `import wallImage from '../assets/wall.webp';\n\nexport { wallImage };\n\nexport interface Hold {\n\tid: string;\n\tpath: string;\n\ttransform?: string;\n}\n\nexport const holds: Hold[] = ${JSON.stringify(holds, null, '\t')};\n`;
+const output = `export interface Hold {\n\tid: string;\n\tpath: string;\n\ttransform?: string;\n}\n\nexport const holds: Hold[] = ${JSON.stringify(holds, null, '\t')};\n`;
 await fs.writeFile(outputPath, output);
 console.log(`Generated ${holds.length} holds from ${sourcePath}`);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { holds, wallImage } from './wall';
+	import { holds } from './wall';
 	import type { Boulder, HoldType } from './types';
 
 	let { routes }: { routes: Boulder[] } = $props();
@@ -34,7 +34,7 @@
 						<span>{route.grade}</span>
 					</header>
 					<svg viewBox="0 0 264.58334 264.58335" aria-label={`Map for ${route.name || 'unnamed climb'}`}>
-						<image href={wallImage} x="0" y="0" width="264.58334" height="264.58334" preserveAspectRatio="none" />
+						<use href="#shared-wall-image" />
 						<g transform="translate(-8.4350872,-5.7149787)">
 							{#each holds as hold}
 								<path class={holdType(route, hold.id)} d={hold.path} transform={hold.transform} />

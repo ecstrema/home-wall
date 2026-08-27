@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import favicon from "./assets/favicon.ico";
+  import wallImage from "./lib/assets/wall.webp";
   import PrintRoutes from "./lib/route-setter/PrintRoutes.svelte";
   import RouteList from "./lib/route-setter/RouteList.svelte";
   import WallCanvas from "./lib/route-setter/WallCanvas.svelte";
@@ -171,6 +172,13 @@
     }
     saveStatus = "Saving...";
     const clone = document.documentElement.cloneNode(true) as HTMLElement;
+    const appMountPoint = clone.querySelector("#app");
+    if (appMountPoint) {
+      appMountPoint.innerHTML = "";
+    } else {
+      // Fallback: If we mount directly to the body, manually remove the app nodes
+      clone.querySelectorAll(".app").forEach((el) => el.remove());
+    }
     clone
       .querySelectorAll('[id^="hold-"]')
       .forEach((element) => element.classList.remove("start", "normal", "end"));
@@ -435,10 +443,12 @@
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
       if (import.meta.env.DEV || !hasUnsavedChanges) return;
       event.preventDefault();
-      event.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+      event.returnValue =
+        "You have unsaved changes. Are you sure you want to leave?";
     };
     window.addEventListener("keydown", saveOnShortcut);
     window.addEventListener("beforeunload", warnBeforeUnload);
+
     checkForUpdates();
     return () => {
       window.removeEventListener("keydown", saveOnShortcut);
@@ -453,6 +463,20 @@
 </svelte:head>
 
 <div class="app">
+  <!-- Shared image for reuse -->
+  <svg style="display: none;">
+    <g id="shared-wall-image">
+      <image
+        href={wallImage}
+        x="0"
+        y="0"
+        width="264.58334"
+        height="264.58334"
+        preserveAspectRatio="none"
+      />
+    </g>
+  </svg>
+
   <aside>
     <header>
       <input
@@ -477,7 +501,7 @@
 
     <footer>
       <button onclick={printRoutes}>Print routes</button>
-      <button onclick={saveRoutes}>Save shared HTML</button>
+      <button onclick={saveRoutes}>Save HTML</button>
       <button onclick={exportData}>Export data</button>
       <button onclick={importData}>Import data</button>
       <input

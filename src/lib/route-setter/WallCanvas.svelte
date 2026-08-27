@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Boulder } from "./types";
-  import { holds, wallImage } from "./wall";
+  import { holds } from "./wall";
 
   let {
     route,
@@ -32,14 +32,7 @@
     role="img"
     aria-label="Climbing wall holds"
   >
-    <image
-      href={wallImage}
-      x="0"
-      y="0"
-      width="264.58334"
-      height="264.58334"
-      preserveAspectRatio="none"
-    />
+    <use href="#shared-wall-image" />
     <g transform="translate(-8.4350872,-5.7149787)">
       {#each holds as hold}
         <path

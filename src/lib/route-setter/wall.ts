@@ -1,7 +1,3 @@
-import wallImage from '../assets/wall.webp';
-
-export { wallImage };
-
 export interface Hold {
 	id: string;
 	path: string;
