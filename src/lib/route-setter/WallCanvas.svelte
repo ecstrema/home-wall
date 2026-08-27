@@ -90,19 +90,22 @@
     cursor: pointer;
     pointer-events: all;
   }
+  .wall :global([id^="hold-"]:hover:not(.start):not(.normal):not(.end)) {
+    stroke: #ffffff !important;
+    stroke-width: 1px;
+    stroke-dasharray: 2 4;
+    stroke-linecap: round;
+  }
   .wall :global([id^="hold-"]:hover) {
-    filter: brightness(1.2);
+    fill: #ffffff59 !important;
   }
   .wall :global(.start) {
-    fill: #e4a25759 !important;
     stroke: #e4a257 !important;
   }
   .wall :global(.normal) {
-    fill: #72a9b759 !important;
     stroke: #03ccff !important;
   }
   .wall :global(.end) {
-    fill: #d96e6259 !important;
     stroke: #d0230f !important;
   }
   @media (max-width: 700px) {
